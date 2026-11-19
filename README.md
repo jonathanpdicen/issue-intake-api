@@ -6,11 +6,16 @@ A Laravel API where a support team submits issues and comments on them. Each iss
 
 | Method | Endpoint | Purpose |
 |---|---|---|
+| POST | `/api/v1/auth/register` | Create an account (`name`, `email`, `password`, `password_confirmation`, `device_name`) and get a bearer token |
+| POST | `/api/v1/auth/login` | Exchange `email`, `password` and `device_name` for a bearer token |
+| POST | `/api/v1/auth/logout` | Revoke the current token |
 | POST | `/api/issues` | Create an issue |
 | GET | `/api/issues?status=open&priority=high&category=billing` | List issues (filters can be combined) |
 | GET | `/api/issues/{id}` | View one issue with its comments |
 | PATCH | `/api/issues/{id}` | Update an issue |
 | POST | `/api/issues/{id}/comments` | Add a comment |
+
+All issue and comment endpoints require authentication. Send the token as `Authorization: Bearer <token>`; missing or invalid tokens return `401` with `error.code` of `unauthenticated`.
 
 ---
 
