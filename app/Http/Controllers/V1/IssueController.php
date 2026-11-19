@@ -4,10 +4,12 @@ namespace App\Http\Controllers\V1;
 
 use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
+use App\Enums\SummaryStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Issue\StoreRequest;
 use App\Http\Requests\Issue\UpdateRequest;
 use App\Http\Resources\IssueResource;
+use App\Jobs\GenerateIssueSummary;
 use App\Models\Issue;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -47,6 +49,8 @@ class IssueController extends Controller
             ->create($request->validated())
             ->refresh();
 
+        GenerateIssueSummary::dispatch($issue)->afterCommit();
+
         return new IssueResource($issue);
     }
 
@@ -59,7 +63,23 @@ class IssueController extends Controller
 
     public function update(UpdateRequest $request, Issue $issue): IssueResource
     {
-        $issue->update($request->validated());
+        $issue->fill($request->validated());
+
+        $descriptionChanged = $issue->isDirty('description');
+
+        if ($descriptionChanged) {
+            $issue->forceFill([
+                'summary' => null,
+                'suggested_next_action' => null,
+                'summary_status' => SummaryStatus::PENDING,
+            ]);
+        }
+
+        $issue->save();
+
+        if ($descriptionChanged) {
+            GenerateIssueSummary::dispatch($issue)->afterCommit();
+        }
 
         return new IssueResource($issue);
     }

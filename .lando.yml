@@ -11,6 +11,8 @@ services:
       - apt-get install -y nodejs
   database:
     portforward: 33067
+  cache:
+    type: redis:7
 tooling:
   node:
     service: appserver

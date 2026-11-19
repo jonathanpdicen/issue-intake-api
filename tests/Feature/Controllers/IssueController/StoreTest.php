@@ -3,6 +3,8 @@
 use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\SummaryStatus;
+use App\Jobs\GenerateIssueSummary;
+use Illuminate\Support\Facades\Queue;
 
 it('creates an issue with default status and summary status', function () {
     $response = $this->postJson('/api/v1/issues', issuePayload());
@@ -63,4 +65,16 @@ it('ignores needs_attention and summary fields sent by the client', function () 
         ->assertJsonPath('data.needs_attention', false)
         ->assertJsonPath('data.summary_status', SummaryStatus::PENDING->value)
         ->assertJsonPath('data.summary', null);
+});
+
+it('queues summary generation and responds with a pending summary', function () {
+    Queue::fake();
+
+    $id = $this->postJson('/api/v1/issues', issuePayload())
+        ->assertCreated()
+        ->assertJsonPath('data.summary_status', SummaryStatus::PENDING->value)
+        ->assertJsonPath('data.summary', null)
+        ->json('data.id');
+
+    Queue::assertPushed(GenerateIssueSummary::class, fn (GenerateIssueSummary $job) => $job->issue->id === $id);
 });
