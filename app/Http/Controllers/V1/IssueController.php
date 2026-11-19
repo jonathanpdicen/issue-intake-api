@@ -30,6 +30,7 @@ class IssueController extends Controller
         ]);
 
         $issues = Issue::query()
+            ->withCount('comments')
             ->status($request->enum('status', IssueStatus::class))
             ->priority($request->enum('priority', IssuePriority::class))
             ->category($filters['category'] ?? null)
@@ -51,6 +52,8 @@ class IssueController extends Controller
 
     public function show(Issue $issue): IssueResource
     {
+        $issue->load('comments');
+
         return new IssueResource($issue);
     }
 
