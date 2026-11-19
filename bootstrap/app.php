@@ -3,6 +3,7 @@
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RejectMalformedJson;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -66,6 +67,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
             if ($e instanceof ValidationException) {
                 return $error(Response::HTTP_UNPROCESSABLE_ENTITY, 'validation_failed', $e->getMessage(), $e->errors());
+            }
+
+            if ($e instanceof AuthenticationException) {
+                return $error(Response::HTTP_UNAUTHORIZED, 'unauthenticated', 'Authentication is required.');
             }
 
             if ($e instanceof HttpExceptionInterface) {

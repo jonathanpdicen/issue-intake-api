@@ -4,6 +4,7 @@ use App\Contracts\SummaryGenerator;
 use App\Enums\SummaryStatus;
 use App\Jobs\GenerateIssueSummary;
 use App\Models\Issue;
+use App\Models\User;
 use App\Services\Summary\RulesBasedSummaryGenerator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -27,7 +28,8 @@ it('marks the issue failed and keeps the api responding', function () {
     (new GenerateIssueSummary($issue))->failed(new RuntimeException('LLM down'));
 
     expect($issue->refresh()->summary_status)->toBe(SummaryStatus::FAILED);
-    $this->getJson("/api/v1/issues/{$issue->id}")
+    $this->actingAs(User::factory()->create(), 'sanctum')
+        ->getJson("/api/v1/issues/{$issue->id}")
         ->assertOk()
         ->assertJsonPath('data.summary_status', SummaryStatus::FAILED->value);
 });
