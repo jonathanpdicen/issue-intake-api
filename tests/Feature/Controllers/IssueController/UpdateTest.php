@@ -3,7 +3,9 @@
 use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\SummaryStatus;
+use App\Jobs\GenerateIssueSummary;
 use App\Models\Issue;
+use Illuminate\Support\Facades\Queue;
 
 it('updates the status of an issue', function () {
     $issue = Issue::factory()
@@ -59,4 +61,41 @@ it('ignores needs_attention and summary_status sent by the client', function () 
         ->assertOk()
         ->assertJsonPath('data.needs_attention', true)
         ->assertJsonPath('data.summary_status', SummaryStatus::PENDING->value);
+});
+
+it('resets the summary and queues generation when the description changes', function () {
+    Queue::fake();
+    $issue = Issue::factory()->create([
+        'summary' => 'Old summary.',
+        'suggested_next_action' => 'Old action.',
+        'summary_status' => SummaryStatus::READY,
+    ]);
+
+    $this->patchJson("/api/v1/issues/{$issue->id}", ['description' => 'A brand new description.'])
+        ->assertOk()
+        ->assertJsonPath('data.summary_status', SummaryStatus::PENDING->value)
+        ->assertJsonPath('data.summary', null)
+        ->assertJsonPath('data.suggested_next_action', null);
+
+    Queue::assertPushed(GenerateIssueSummary::class, fn (GenerateIssueSummary $job) => $job->issue->is($issue));
+});
+
+it('does not regenerate the summary when other fields change', function () {
+    Queue::fake();
+    $issue = Issue::factory()->create([
+        'summary' => 'Existing summary.',
+        'suggested_next_action' => 'Existing action.',
+        'summary_status' => SummaryStatus::READY,
+    ]);
+
+    $this->patchJson("/api/v1/issues/{$issue->id}", [
+        'status' => IssueStatus::RESOLVED->value,
+        'description' => $issue->description,
+    ])->assertOk();
+
+    Queue::assertNothingPushed();
+    expect($issue->refresh())
+        ->summary->toBe('Existing summary.')
+        ->suggested_next_action->toBe('Existing action.')
+        ->summary_status->toBe(SummaryStatus::READY);
 });

@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
+use App\Jobs\GenerateIssueSummary;
 use App\Models\Issue;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Arr;
@@ -81,7 +82,10 @@ class IssueSeeder extends Seeder
         foreach ($issues as $attributes) {
             $comments = Arr::pull($attributes, 'comments', []);
 
-            Issue::create($attributes)->comments()->createMany($comments);
+            $issue = Issue::create($attributes);
+            $issue->comments()->createMany($comments);
+
+            GenerateIssueSummary::dispatch($issue);
         }
     }
 }

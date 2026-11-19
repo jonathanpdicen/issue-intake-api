@@ -3,11 +3,13 @@
 use App\Enums\IssuePriority;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 pest()
     ->extend(TestCase::class)
+    ->beforeEach(fn () => Http::preventStrayRequests())
     ->in('Feature');
 
 pest()
