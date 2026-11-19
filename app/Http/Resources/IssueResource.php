@@ -31,6 +31,8 @@ class IssueResource extends JsonResource
             'needs_attention' => $this->needs_attention,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
+            'comments_count' => $this->whenCounted('comments'),
+            'comments' => CommentResource::collection($this->whenLoaded('comments')),
         ];
     }
 }

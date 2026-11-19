@@ -2,6 +2,7 @@
 
 use App\Enums\IssuePriority;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
@@ -32,4 +33,18 @@ function assertErrorShape(TestResponse $response, string $code): void
 {
     $response->assertJsonStructure(['error' => ['code', 'message', 'details']])
         ->assertJsonPath('error.code', $code);
+}
+
+function countQueries(Closure $callback): int
+{
+    DB::flushQueryLog();
+    DB::enableQueryLog();
+
+    $callback();
+
+    $count = count(DB::getQueryLog());
+
+    DB::disableQueryLog();
+
+    return $count;
 }

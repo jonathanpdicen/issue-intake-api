@@ -6,6 +6,7 @@ use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Models\Issue;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Arr;
 
 class IssueSeeder extends Seeder
 {
@@ -21,6 +22,11 @@ class IssueSeeder extends Seeder
                 'priority' => IssuePriority::HIGH,
                 'category' => 'billing',
                 'status' => IssueStatus::OPEN,
+                'comments' => [
+                    ['author_name' => 'Priya Nair', 'body' => 'Confirmed in Stripe: two successful charges for order #48213, 41 seconds apart.'],
+                    ['author_name' => 'Marcus Webb', 'body' => 'Refund for the duplicate charge issued. It should reach the customer in 5-10 business days.'],
+                    ['author_name' => 'Priya Nair', 'body' => 'Looks like a double-submit on checkout. Opening a bug to disable the button after the first click.'],
+                ],
             ],
             [
                 'title' => 'Cannot log in after password reset',
@@ -28,6 +34,10 @@ class IssueSeeder extends Seeder
                 'priority' => IssuePriority::HIGH,
                 'category' => 'login',
                 'status' => IssueStatus::IN_PROGRESS,
+                'comments' => [
+                    ['author_name' => 'Sofia Alvarez', 'body' => 'Reproduced. The reset token is invalidated, but the old password hash is still cached for the session.'],
+                    ['author_name' => 'Daniel Okafor', 'body' => 'Fix is in review. Meanwhile I can force a manual reset for this customer.'],
+                ],
             ],
             [
                 'title' => 'Dashboard takes 20 seconds to load',
@@ -35,6 +45,12 @@ class IssueSeeder extends Seeder
                 'priority' => IssuePriority::MEDIUM,
                 'category' => 'performance',
                 'status' => IssueStatus::IN_PROGRESS,
+                'comments' => [
+                    ['author_name' => 'Daniel Okafor', 'body' => 'The orders widget runs an unindexed query on accounts with more than 50k orders.'],
+                    ['author_name' => 'Sofia Alvarez', 'body' => 'Added the missing index in staging, load time is down to about 2 seconds.'],
+                    ['author_name' => 'Marcus Webb', 'body' => 'Please confirm with the customer once it ships to production.'],
+                    ['author_name' => 'Daniel Okafor', 'body' => 'Deployed. Waiting on customer confirmation.'],
+                ],
             ],
             [
                 'title' => 'Export button downloads an empty CSV',
@@ -42,6 +58,9 @@ class IssueSeeder extends Seeder
                 'priority' => IssuePriority::MEDIUM,
                 'category' => 'bug',
                 'status' => IssueStatus::OPEN,
+                'comments' => [
+                    ['author_name' => 'Marcus Webb', 'body' => 'Only happens when a date filter is active. The filter is applied after the export query runs.'],
+                ],
             ],
             [
                 'title' => 'Update the company name on my account',
@@ -59,8 +78,10 @@ class IssueSeeder extends Seeder
             ],
         ];
 
-        foreach ($issues as $issue) {
-            Issue::create($issue);
+        foreach ($issues as $attributes) {
+            $comments = Arr::pull($attributes, 'comments', []);
+
+            Issue::create($attributes)->comments()->createMany($comments);
         }
     }
 }
