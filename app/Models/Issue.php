@@ -11,11 +11,13 @@ use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
+ * @property int|null $reporter_id
  * @property string $title
  * @property string $description
  * @property IssuePriority $priority
@@ -28,7 +30,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['title', 'description', 'priority', 'category', 'status'])]
+#[Fillable(['reporter_id', 'title', 'description', 'priority', 'category', 'status'])]
 class Issue extends Model
 {
     /** @use HasFactory<IssueFactory> */
@@ -59,6 +61,14 @@ class Issue extends Model
             'summary_status' => SummaryStatus::class,
             'needs_attention' => 'boolean',
         ];
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function reporter(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reporter_id');
     }
 
     /**
