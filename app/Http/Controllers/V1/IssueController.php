@@ -46,7 +46,10 @@ class IssueController extends Controller
     public function store(StoreRequest $request): IssueResource
     {
         $issue = Issue::query()
-            ->create($request->validated())
+            ->create([
+                ...$request->validated(),
+                'reporter_id' => $request->user()->id,
+            ])
             ->refresh();
 
         GenerateIssueSummary::dispatch($issue)->afterCommit();

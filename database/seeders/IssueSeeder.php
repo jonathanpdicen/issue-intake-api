@@ -6,6 +6,7 @@ use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Jobs\GenerateIssueSummary;
 use App\Models\Issue;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Arr;
 
@@ -16,6 +17,8 @@ class IssueSeeder extends Seeder
      */
     public function run(): void
     {
+        $reporter = User::query()->first();
+
         $issues = [
             [
                 'title' => 'Charged twice for the same order',
@@ -82,7 +85,7 @@ class IssueSeeder extends Seeder
         foreach ($issues as $attributes) {
             $comments = Arr::pull($attributes, 'comments', []);
 
-            $issue = Issue::create($attributes);
+            $issue = Issue::create([...$attributes, 'reporter_id' => $reporter?->id]);
             $issue->comments()->createMany($comments);
 
             GenerateIssueSummary::dispatch($issue);

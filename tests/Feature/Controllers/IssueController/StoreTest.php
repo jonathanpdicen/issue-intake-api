@@ -4,6 +4,7 @@ use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\SummaryStatus;
 use App\Jobs\GenerateIssueSummary;
+use App\Models\User;
 use Illuminate\Support\Facades\Queue;
 
 it('creates an issue with default status and summary status', function () {
@@ -65,6 +66,15 @@ it('ignores needs_attention and summary fields sent by the client', function () 
         ->assertJsonPath('data.needs_attention', false)
         ->assertJsonPath('data.summary_status', SummaryStatus::PENDING->value)
         ->assertJsonPath('data.summary', null);
+});
+
+it('records the authenticated user as the reporter and ignores a client-supplied one', function () {
+    $other = User::factory()->create();
+
+    $response = $this->postJson('/api/v1/issues', issuePayload(['reporter_id' => $other->id]));
+
+    $response->assertCreated()
+        ->assertJsonPath('data.reporter_id', auth()->id());
 });
 
 it('queues summary generation and responds with a pending summary', function () {

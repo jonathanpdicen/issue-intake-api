@@ -20,6 +20,7 @@ class IssueResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'reporter_id' => $this->reporter_id,
             'title' => $this->title,
             'description' => $this->description,
             'priority' => $this->priority->value,
