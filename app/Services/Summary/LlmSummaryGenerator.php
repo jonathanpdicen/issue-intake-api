@@ -7,6 +7,7 @@ use App\Models\Issue;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use JsonException;
 
@@ -59,7 +60,7 @@ class LlmSummaryGenerator implements SummaryGenerator
 
     private function prompt(Issue $issue): string
     {
-        return strtr(file_get_contents(resource_path('prompts/issue-summary.md')), [
+        return strtr(File::get(resource_path('prompts/issue-summary.md')), [
             '{{title}}' => $issue->title,
             '{{category}}' => $issue->category,
             '{{priority}}' => $issue->priority->value,
@@ -85,7 +86,7 @@ class LlmSummaryGenerator implements SummaryGenerator
             throw new SummaryGenerationException('LLM returned a missing, empty or too long field.');
         }
 
-        if (count(preg_split('/(?<=[.!?])\s+/', trim($summary))) > self::MAX_SUMMARY_SENTENCES) {
+        if (count(preg_split('/(?<=[.!?])\s+/', trim($summary)) ?: []) > self::MAX_SUMMARY_SENTENCES) {
             throw new SummaryGenerationException('LLM summary has more than two sentences.');
         }
 

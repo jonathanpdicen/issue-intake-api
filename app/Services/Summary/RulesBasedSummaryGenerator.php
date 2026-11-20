@@ -28,7 +28,8 @@ class RulesBasedSummaryGenerator implements SummaryGenerator
 
     private function firstSentence(string $description): string
     {
-        $sentence = preg_split('/(?<=[.!?])\s+/', Str::squish($description), 2)[0];
+        $squished = Str::squish($description);
+        $sentence = (preg_split('/(?<=[.!?])\s+/', $squished, 2) ?: [$squished])[0];
 
         return Str::limit(rtrim($sentence, '.!?'), config('summary.rules.summary_excerpt_length'), '…', preserveWords: true);
     }
